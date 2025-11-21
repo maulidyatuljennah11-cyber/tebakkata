@@ -1,0 +1,165 @@
+from datetime import datetime
+
+# --- 1. DATA UTAMA ---
+
+# Database utama inventaris buku
+perpustakaan = [
+    {"judul": "Filosofi Teras", "penulis": "Henry Manampiring", "status": "Tersedia"},
+    {"judul": "Bumi Manusia", "penulis": "Pramoedya Ananta Toer", "status": "Dipinjam"},
+    {"judul": "Atomic Habits", "penulis": "James Clear", "status": "Tersedia"}
+]
+
+# Log untuk mencatat semua transaksi pinjam dan kembali (Masuk & Keluar)
+log_transaksi = []
+
+# --- 2. FUNGSI UTILITY ---
+
+def cari_buku_berdasarkan_judul(judul_dicari):
+    """Mencari buku di inventaris, mengembalikan objek buku jika ditemukan."""
+    for buku in perpustakaan:
+        if buku["judul"].lower() == judul_dicari.lower():
+            return buku
+    return None
+
+def catat_transaksi(jenis, judul, keterangan=""):
+    """Mencatat setiap pinjam atau kembali ke log transaksi."""
+    log_transaksi.append({
+        "waktu": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "jenis": jenis, # PINJAM atau KEMBALI
+        "judul_buku": judul,
+        "keterangan": keterangan
+    })
+
+# --- 3. FUNGSI INVENTARIS ---
+
+def tambah_buku(judul, penulis):
+    """Menambahkan buku baru ke inventaris (Buku MASUK ke sistem)."""
+    buku_baru = {
+        "judul": judul,
+        "penulis": penulis,
+        "status": "Tersedia"
+    }
+    perpustakaan.append(buku_baru)
+    
+    # Mencatat ini sebagai aktivitas penambahan (buku masuk)
+    catat_transaksi("MASUK (Baru)", judul, f"Penambahan buku baru oleh {penulis}")
+    print(f"\n✅ Buku '{judul}' oleh {penulis} berhasil ditambahkan.")
+
+def pinjam_buku(judul):
+    """Mengubah status buku menjadi 'Dipinjam' (Buku KELUAR dari sistem)."""
+    buku = cari_buku_berdasarkan_judul(judul)
+    
+    if buku:
+        if buku["status"] == "Tersedia":
+            buku["status"] = "Dipinjam"
+            # Mencatat transaksi pinjam (buku keluar)
+            catat_transaksi("KELUAR (Pinjam)", judul, "Buku dipinjam oleh anggota")
+            print(f"\n✅ Buku '{judul}' berhasil *dipinjam*.")
+        elif buku["status"] == "Dipinjam":
+            print(f"\n⚠ Gagal: Buku '{judul}' saat ini sudah *Dipinjam*.")
+    else:
+        print(f"\n❌ Gagal: Buku dengan judul '{judul}' tidak ditemukan.")
+
+def kembalikan_buku(judul):
+    """Mengubah status buku menjadi 'Tersedia' (Buku MASUK kembali ke sistem)."""
+    buku = cari_buku_berdasarkan_judul(judul)
+    
+    if buku:
+        if buku["status"] == "Dipinjam":
+            buku["status"] = "Tersedia"
+            # Mencatat transaksi kembali (buku masuk)
+            catat_transaksi("MASUK (Kembali)", judul, "Buku dikembalikan oleh anggota")
+            print(f"\n✅ Buku '{judul}' berhasil *dikembalikan* dan kini *Tersedia*.")
+        elif buku["status"] == "Tersedia":
+            print(f"\n⚠ Gagal: Buku '{judul}' saat ini sudah *Tersedia*.")
+    else:
+        print(f"\n❌ Gagal: Buku dengan judul '{judul}' tidak ditemukan.")
+
+# --- 4. FUNGSI DISPLAY ---
+
+def tampilkan_inventaris(filter_status=None):
+    """Menampilkan daftar semua buku atau yang difilter berdasarkan status."""
+    
+    print("\n--- 📚 DATA INVENTARIS BUKU SAAT INI ---")
+    
+    buku_untuk_tampil = []
+    if filter_status:
+        buku_untuk_tampil = [b for b in perpustakaan if b['status'].lower() == filter_status.lower()]
+        judul_tampilan = f"Status: {filter_status.upper()}"
+    else:
+        buku_untuk_tampil = perpustakaan
+        judul_tampilan = "SEMUA BUKU"
+
+    print(f"| {judul_tampilan} | Total: {len(buku_untuk_tampil)}")
+    print("---------------------------------------")
+    
+    if not buku_untuk_tampil:
+        print("Data buku kosong.")
+        return
+
+    for i, buku in enumerate(buku_untuk_tampil, 1):
+        status_ikon = "🟢" if buku['status'] == "Tersedia" else "🔴"
+        print(f"{i}. Judul: {buku['judul']} | Penulis: {buku['penulis']} | Status: {status_ikon} *{buku['status']}*")
+    print("---------------------------------------")
+
+def tampilkan_log_transaksi():
+    """Menampilkan riwayat semua aktivitas Pinjam/Kembali (Masuk & Keluar)."""
+    print("\n--- 📜 LOG TRANSAKSI (MASUK & KELUAR) ---")
+    if not log_transaksi:
+        print("Log transaksi masih kosong.")
+        return
+        
+    print("| Waktu & Tanggal      | Jenis Transaksi | Judul Buku")
+    print("----------------------------------------------------------------")
+
+    # Tampilkan transaksi terbaru di atas
+    for log in reversed(log_transaksi):
+        ikon = "➡" if "KELUAR" in log['jenis'] else "⬅"
+        print(f"| {log['waktu']} | {ikon} *{log['jenis']}:* {log['judul_buku']}")
+    print("----------------------------------------------------------------")
+
+
+# --- 5. MENU UTAMA (ANTARMUKA) ---
+
+def menu_utama():
+    """Menjalankan aplikasi interaktif di terminal."""
+    while True:
+        print("\n=== PERPUSTAKAAN CAKRAWALA SMKN 1 AROSBAYA ===")
+        print("1. Tambah Buku Baru (Buku Masuk)")
+        print("2. Pinjam Buku (Buku Keluar)")
+        print("3. Kembalikan Buku (Buku Masuk Kembali)")
+        print("4. Lihat Inventaris Buku Saat Ini")
+        print("5. Lihat *LOG TRANSAKSI* (Masuk & Keluar)")
+        print("6. Keluar")
+        print("----------------------------")
+        
+        pilihan = input("Masukkan pilihan Anda (1-6): ")
+        
+        if pilihan == '1':
+            judul = input("Masukkan Judul Buku Baru: ")
+            penulis = input("Masukkan Nama Penulis: ")
+            tambah_buku(judul, penulis)
+            
+        elif pilihan == '2':
+            judul = input("Masukkan Judul Buku yang Dipinjam: ")
+            pinjam_buku(judul)
+            
+        elif pilihan == '3':
+            judul = input("Masukkan Judul Buku yang Dikembalikan: ")
+            kembalikan_buku(judul)
+
+        elif pilihan == '4':
+            tampilkan_inventaris()
+            
+        elif pilihan == '5':
+            tampilkan_log_transaksi()
+            
+        elif pilihan == '6':
+            print("Terima kasih! Aplikasi manajer perpustakaan ditutup.")
+            break
+            
+        else:
+            print("Pilihan tidak valid. Silakan masukkan angka antara 1 dan 6.")
+
+# Menjalankan aplikasi
+menu_utama()
