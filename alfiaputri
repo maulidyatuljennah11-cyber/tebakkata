@@ -1,0 +1,146 @@
+# =========================================================
+# Aplikasi Kasir Sederhana (CLI)
+# Fokus: Logika Kuat (Perhitungan), Alur Jelas (Menu)
+# =========================================================
+
+# 1. Database Menu Barang (Logika Kuat: Struktur Data)
+# Menggunakan Dictionary untuk menyimpan NAMA_BARANG: HARGA
+MENU_BARANG = {
+    "1": {"nama": "Buku Sinar Dunia", "harga": 3500},
+    "2": {"nama": "Bolpoin Faster", "harga": 3500},
+    "3": {"nama": "Penghapus Joyko", "harga": 1500},
+    "4": {"nama": "Penggaris Joyko", "harga": 4000},
+    "5": {"nama": "Kerudung Putih", "harga": 40000},
+    "6": {"nama": "Kerudung Pramuka", "harga": 40000},
+    "7": {"nama": "Badge Logo SMKN 1 AROSBAYA", "harga": 8000},
+    "8": {"nama": "Topi Abu-abu", "harga": 25000},
+    "9": {"nama": "Dasi Abu-abu", "harga": 15000},
+    "10": {"nama": "Kaos kaki Putih", "harga": 20000}
+}
+
+# Variabel untuk menyimpan pesanan (List of Dictionaries)
+PESANAN_PELANGGAN = []
+
+# Konstanta
+PAJAK_PERSEN = 0.0  # 0%
+
+def tampilkan_menu():
+    """Menampilkan daftar menu yang tersedia."""
+    print("\n" + "="*30)
+    print("      DAFTAR MENU KOPERASI MAKMUR SEJAHTERA")
+    print("="*30)
+    for kode, item in MENU_BARANG.items():
+        # Menggunakan format string untuk output yang rapi
+        print(f"| {kode}. {item['nama']:<15} Rp{item['harga']:>8,.0f} |")
+    print("="*30)
+
+def tambah_pesanan():
+    """Mengambil input dari pengguna dan menambahkannya ke daftar pesanan."""
+    while True:
+        kode_menu = input("Masukkan Kode Menu (atau 'x' untuk selesai): ").lower()
+        if kode_menu == 'x':
+            break
+
+        if kode_menu not in MENU_BARANG:
+            print("*Kode menu tidak valid. Silakan coba lagi.*")
+            continue
+
+        try:
+            jumlah = int(input(f"Masukkan Jumlah {MENU_BARANG[kode_menu]['nama']}: "))
+            if jumlah <= 0:
+                print("*Jumlah harus lebih dari nol.*")
+                continue
+        except ValueError:
+            print("*Input jumlah tidak valid. Harap masukkan angka.*")
+            continue
+
+        # Tambahkan pesanan ke List PESANAN_PELANGGAN
+        item = MENU_BARANG[kode_menu]
+        PESANAN_PELANGGAN.append({
+            "nama": item["nama"],
+            "harga": item["harga"],
+            "jumlah": jumlah,
+            "subtotal": item["harga"] * jumlah
+        })
+        print(f"-> {jumlah} {item['nama']} ditambahkan ke keranjang.")
+
+def hitung_total():
+    """Menghitung total harga, pajak, dan grand total."""
+    if not PESANAN_PELANGGAN:
+        print("\n*Keranjang belanja kosong.*")
+        return 0, 0, 0
+
+    # Hitung Subtotal
+    subtotal = sum(item["subtotal"] for item in PESANAN_PELANGGAN)
+
+    # Hitung Pajak
+    pajak = subtotal * PAJAK_PERSEN
+
+    # Hitung Grand Total
+    grand_total = subtotal + pajak
+
+    return subtotal, pajak, grand_total
+
+def cetak_struk(subtotal, pajak, grand_total):
+    """Mencetak detail pesanan, total, dan memproses pembayaran."""
+    print("\n" + "*"*40)
+    print("         STRUK PEMBAYARAN")
+    print("*"*40)
+
+    # Tampilkan Detail Pesanan
+    print(f"{'Item':<18} {'Harga':>8} {'Jml':>4} {'Subtotal':>8}")
+    print("-" * 40)
+    for item in PESANAN_PELANGGAN:
+        print(
+            f"{item['nama']:<18} "
+            f"Rp{item['harga']:>7,.0f} "
+            f"{item['jumlah']:>4} "
+            f"Rp{item['subtotal']:>7,.0f}"
+        )
+    print("-" * 40)
+
+    # Tampilkan Total
+    print(f"{'Subtotal':<30} Rp{subtotal:>8,.0f}")
+    print(f"{f'Pajak ({int(PAJAK_PERSEN*100)}%)':<30} Rp{pajak:>8,.0f}")
+    print("=" * 40)
+    print(f"{'GRAND TOTAL':<30} *Rp{grand_total:>8,.0f}*")
+    print("=" * 40)
+
+    # Proses Pembayaran (Logika Kuat: Penanganan Input & Kembalian)
+    while True:
+        try:
+            bayar = float(input("Masukkan Uang Bayar (Rp): "))
+            if bayar < grand_total:
+                print(f"*Uang kurang. Kurang Rp{grand_total - bayar:,.0f}*")
+            else:
+                kembalian = bayar - grand_total
+                print(f"\nUang Bayar: Rp{bayar:,.0f}")
+                print(f"Kembalian:  Rp{kembalian:,.0f}")
+                print("\nTERIMA KASIH! Silakan datang kembali.")
+                break
+        except ValueError:
+            print("*Input pembayaran tidak valid. Harap masukkan angka.*")
+
+def main():
+    """Fungsi utama untuk mengontrol alur program."""
+    print("="*30)
+    print("  SELAMAT DATANG DI KOPERASI MAKMUR SEJAHTERA SMKN 1 AROSBAYA")
+    print("="*30)
+
+    # Alur 1: Tampilkan Menu
+    tampilkan_menu()
+
+    # Alur 2: Tambah Pesanan
+    tambah_pesanan()
+
+    # Cek apakah ada pesanan sebelum lanjut
+    if PESANAN_PELANGGAN:
+        # Alur 3: Hitung dan Cetak Struk
+        subtotal, pajak, grand_total = hitung_total()
+        cetak_struk(subtotal, pajak, grand_total)
+    else:
+        print("\n*Transaksi dibatalkan karena tidak ada pesanan.*")
+
+# Menjalankan program utama
+if _name_ == "_main_":
+    main()
